@@ -22,13 +22,13 @@
 (define interpret
   (lambda (pt s)
     (cond
-      ((null? (caar pt)) (interpret (cdr pt) s))
       ((null? pt) s)
+      ((null? (caar pt)) (interpret (cdr pt) s))
       ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (if (null? (cddar pt)) (cddar pt) (caddar pt)) s)) (cdr (m_eval (if (null? (cddar pt)) (cddar pt) (caddar pt)) s))))) 
       ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                              ; if "="
-      ((eqv? (caar pt) 'return) (car (m_eval (cadar pt) s)))                                                                          ; if "return"
-      ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (car (cdddar pt)))))                                     ; if "if"
-      ((eqv? (caar pt) 'while) (interpret (cdr pt) (m_while (cadar pt) (caddar pt))))                                                 ; if "while"
+      ((eqv? (caar pt) 'return) (car (m_eval (cadar pt) s)))                                                                         ; if "return"
+      ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (if (null? (cdddar pt)) '() (car (cdddar pt))) s)))       ; if "if"
+      ((eqv? (caar pt) 'while) (interpret (cdr pt) (m_while (cadar pt) (caddar pt))))                                                ; if "while"
       (else (error "INTERPRET ERROR: Invalid statement.")))))
 
 ; ------------------------------------------------------------------------------
@@ -46,6 +46,15 @@
       ((eqv? (car pt) '*) (cons (* (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '/) (cons (/ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '%) (cons (modulo (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '==) (cons (eqv? (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '!=) (cons (not (eqv? (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '>) (cons (> (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '>=) (cons (>= (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '<) (cons (< (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '<=) (cons (<= (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '!) (cons (not (car (m_eval (cadr pt) s))) (cdr (m_eval (cadr pt) s))))
+      ((eqv? (car pt) '&&) (cons (and (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '||) (cons (or (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       (else (error "You done fukced up A Aron")) )))
 
 ; ------------------------------------------------------------------------------
@@ -74,8 +83,8 @@
       ((null? condition) (error "CONDITION ERROR: Condition cannot be null."))
       ((null? ifblock) (error "CONDITION ERROR: Block cannot be null."))
       ((null? state) (error "CONDITION ERROR: State cannot be null."))
-      ((car (m_eval condition state)) (interpret ifblock (cdr (m_eval condition state))))
-      (else (if (null? elseblock) (cdr (m_eval condition state)) (interpret elseblock (cdr (m_eval condition state))))))))
+      ((car (m_eval condition state)) (interpret (cons ifblock '()) (cdr (m_eval condition state))))
+      (else (if (null? elseblock) (cdr (m_eval condition state)) (interpret (cons elseblock '()) (cdr (m_eval condition state))))))))
       
 ; ------------------------------------------------------------------------------
 ; decVal - declares and initializes a variable
@@ -155,24 +164,6 @@
       ((and (not (null? vars)) (not (null? vals)))
        (if (eqv? name (car vars)) (car vals) (getVal* name (cdr vars) (cdr vals))))
       (else (error "STATE MISMATCH ERROR: Different number of Variables and Values.")))))
-
-; ------------------------------------------------------------------------------
-; m_if - handles a conditional block
-; inputs:
-;  condition - The condition on which to run the block
-;  block - The block to run if condition is true
-;  state - The state before the condition is evaluated
-; returns:
-;  The final state after evaluating the condition and, if applicable, running the block
-; ------------------------------------------------------------------------------
-(define m_if
-  (lambda (condition block state)
-    (cond
-      ((null? condition) (error "CONDITION ERROR: Condition cannot be null."))
-      ((null? block) (error "CONDITION ERROR: Block cannot be null."))
-      ((null? state) (error "CONDITION ERROR: State cannot be null."))
-      ((car (m_eval condition state)) (interpret block (cdr (m_eval condition state))))
-      (else (cdr (m_eval condition state))))))
 
 ; ------------------------------------------------------------------------------
 ; m_while - handles a WHILE loop
