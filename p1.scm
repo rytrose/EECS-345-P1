@@ -19,7 +19,7 @@
   (lambda (pt s)
     ()))
 
-; decVal
+; decVal - declares and initializes a variable
 ; inputs:
 ;  name - variable name
 ;  value - variable value
@@ -33,12 +33,31 @@
       ((or (null? name) (null? value)) (error "failed adding variable to state"))
       ; if the var name already exists, error
       ((not (eqv? (getVal name state) #f)) (error "namespace for var already occupied"))
-      ; add to state
-      ; 
       (else
        ; add name and value to state
        (cons (cons name (car state)) (cons (cons value (cadr state)) '()) )))))
-    
+
+; setVal - sets the value of an initialized variable
+; inputs:
+;  name - variable name
+;  value - variable value
+;  state - the current state
+; outputs:
+; the updated state
+(define setVal
+  (lambda (name value state)
+    (cond
+      ; if the names or values of states are null, error
+      ((and (null? (car state)) (null? (cadr state))) (error "variable name not found"))
+      ; if it finds the var, set var 
+      ((eqv? name (caar state)) (cons (car state) (cons (cons value (cdadr state)) '())))    
+      ; else recurse on the next state value 
+      (else (cons (cons (caar state) (car (setValRec name value state))) (cons (cons (caadr state) (cadr (setValRec name value state))) '()))) )))
+       
+(define setValRec
+  (lambda (name value state)
+    (setVal name value (cons (cdar state) (cons (cdadr state) '()))) ))
+
 ; getVal
 ; Wrapper method for getVal* to deconstruct state variable as necessary
 ; inputs:
