@@ -27,13 +27,15 @@
       ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (cddar pt) s)) (cdr (m_eval (cddar pt) s))))         ; if "var"
       ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                               ; if "="
       ((eqv? (caar pt) 'return) (car (m_eval (car pt) s)))                                                                            ; if "return"
-      ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) ())))
-      ((eqv? (caar pt) 'while) (interptet (cdr pt) (m_while (cadar pt) ())))
+      ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (car (cdddar pt)))))                                     ; if "if"
+      ((eqv? (caar pt) 'while) (interptet (cdr pt) (m_while (cadar pt) (caddar pt))))                                                 ; if "while"
       (else (error "INTERPRET ERROR: Invalid statement."))))))
 
 ; ------------------------------------------------------------------------------
 ; m_eval - 
 ; ------------------------------------------------------------------------------
+
+
 
 ; ------------------------------------------------------------------------------
 ; m_if - handles a conditional block
