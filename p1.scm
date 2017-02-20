@@ -24,17 +24,28 @@
     (cond
       ((null? (caar pt)) (interpret (cdr pt) s))
       ((null? pt) s)
-      ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (cddar pt) s)) (cdr (m_eval (cddar pt) s))))         ; if "var"
+      ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (cddar pt) s)) (cdr (m_eval (cddar pt) s)))))        ; if "var"
       ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                               ; if "="
-      ((eqv? (caar pt) 'return) (car (m_eval (car pt) s)))                                                                            ; if "return"
+      ((eqv? (caar pt) 'return) (car (m_eval (cadar pt) s)))                                                                          ; if "return"
       ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (car (cdddar pt)))))                                     ; if "if"
       ((eqv? (caar pt) 'while) (interptet (cdr pt) (m_while (cadar pt) (caddar pt))))                                                 ; if "while"
-      (else (error "INTERPRET ERROR: Invalid statement."))))))
+      (else (error "INTERPRET ERROR: Invalid statement.")))))
 
 ; ------------------------------------------------------------------------------
-; m_eval - 
+; m_eval -
+; inputs:
+;  
 ; ------------------------------------------------------------------------------
-
+(define m_eval
+  (lambda (pt s)
+    (cond
+      ((atom? pt) (cons pt s))
+      ((eqv? (car pt) '+) (cons (+ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '-) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '*) (cons (* (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '/) (cons (/ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '%) (cons (modulo (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      (else (error "You done fukced up A Aron")) )))
 
 
 ; ------------------------------------------------------------------------------
