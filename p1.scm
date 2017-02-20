@@ -28,7 +28,7 @@
       ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                              ; if "="
       ((eqv? (caar pt) 'return) (if (boolean? (car (m_eval (cadar pt) s))) (if (car (m_eval (cadar pt) s)) 'true 'false) (car (m_eval (cadar pt) s))))                                                                        ; if "return"
       ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (if (null? (cdddar pt)) '() (car (cdddar pt))) s)))       ; if "if"
-      ((eqv? (caar pt) 'while) (interpret (cdr pt) (m_while (cadar pt) (caddar pt))))                                                ; if "while"
+      ((eqv? (caar pt) 'while) (interpret (cdr pt) (m_while (cadar pt) (caddar pt) s)))                                                ; if "while"
       (else (error "INTERPRET ERROR: Invalid statement.")))))
 
 ; ------------------------------------------------------------------------------
@@ -42,7 +42,7 @@
       ((null? pt) (cons '() s))
       ((eqv? pt 'true) (cons #t s))
       ((eqv? pt 'false) (cons #f s))
-      ((atom? pt) (if (or (not (getVal pt s)) (null? (getVal pt s))) (error "VAR ERROR: Variable used before declaration or assignment.") (cons (getVal pt s) s)))
+      ((atom? pt) (if (or (eqv? (getVal pt s) 'NULL) (null? (getVal pt s))) (error "VAR ERROR: Variable used before declaration or assignment.") (cons (getVal pt s) s)))
       ((eqv? (car pt) '+) (cons (+ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '-)
        (if (null? (cddr pt)) (cons (- (car (m_eval (cadr pt) s))) (cdr (m_eval (cadr pt) s))) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))))
@@ -104,7 +104,7 @@
       ; if name is null, error
       ((null? name) (error "DECVAL ERROR: Failed adding variable to state."))
       ; if the var name already exists, error
-      ((not (eqv? (getVal name state) #f)) (error "DECVAL NAMESPACE ERROR: Namespace for var already occupied."))
+      ((not (eqv? (getVal name state) 'NULL)) (error "DECVAL NAMESPACE ERROR: Namespace for var already occupied."))
       (else
        ; add name and value to state
        (cons (cons name (car state)) (cons (cons value (cadr state)) '()) )))))
@@ -158,12 +158,12 @@
 ; returns:
 ;  Value of variable, if initialized
 ;  '() if defined but not initialized
-;  #f if not defined
+;  NULL if not defined
 ; ------------------------------------------------------------------------------
 (define getVal*
   (lambda (name vars vals)
     (cond
-      ((and (null? vars) (null? vals)) #f)
+      ((and (null? vars) (null? vals)) 'NULL)
       ((and (not (null? vars)) (not (null? vals)))
        (if (eqv? name (car vars)) (car vals) (getVal* name (cdr vars) (cdr vals))))
       (else (error "STATE MISMATCH ERROR: Different number of Variables and Values.")))))
@@ -183,7 +183,7 @@
       ((null? condition) (error "LOOP ERROR: Condition cannot be null."))
       ((null? block) (error "LOOP ERROR: Block cannot be null."))
       ((null? state) (error "LOOP ERROR: State cannot be null."))
-      ((car (m_eval condition state)) (m_while condition block (interpret block (cdr (m_eval condition state)))))
+      ((car (m_eval condition state)) (m_while condition block (interpret (cons block '()) (cdr (m_eval condition state)))) )
       (else (cdr (m_eval condition state))))))
 
 ; ------------------------------------------------------------------------------
