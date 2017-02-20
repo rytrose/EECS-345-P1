@@ -24,11 +24,11 @@
     (cond
       ((null? (caar pt)) (interpret (cdr pt) s))
       ((null? pt) s)
-      ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (cddar pt) s)) (cdr (m_eval (cddar pt) s)))))        ; if "var"
-      ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                               ; if "="
+      ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (if (null? (cddar pt)) (cddar pt) (caddar pt)) s)) (cdr (m_eval (if (null? (cddar pt)) (cddar pt) (caddar pt)) s))))) 
+      ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                              ; if "="
       ((eqv? (caar pt) 'return) (car (m_eval (cadar pt) s)))                                                                          ; if "return"
       ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (car (cdddar pt)))))                                     ; if "if"
-      ((eqv? (caar pt) 'while) (interptet (cdr pt) (m_while (cadar pt) (caddar pt))))                                                 ; if "while"
+      ((eqv? (caar pt) 'while) (interpret (cdr pt) (m_while (cadar pt) (caddar pt))))                                                 ; if "while"
       (else (error "INTERPRET ERROR: Invalid statement.")))))
 
 ; ------------------------------------------------------------------------------
@@ -39,13 +39,23 @@
 (define m_eval
   (lambda (pt s)
     (cond
-      ((atom? pt) (cons pt s))
+      ((null? pt) (cons '() s))
+      ((atom? pt) (cons (getVal pt s) s))
       ((eqv? (car pt) '+) (cons (+ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '-) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '*) (cons (* (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '/) (cons (/ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '%) (cons (modulo (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       (else (error "You done fukced up A Aron")) )))
+
+; ------------------------------------------------------------------------------
+; m_assign -
+; inputs:
+;  
+; ------------------------------------------------------------------------------
+(define m_assign
+  (lambda (pt s)
+    (setVal (car pt) (car (m_eval (cadr pt) s)) (cdr (m_eval (cadr pt) s))) ))
 
 
 ; ------------------------------------------------------------------------------
@@ -79,8 +89,8 @@
 (define decVal 
   (lambda (name value state)
     (cond
-      ; if name or value are null, error
-      ((or (null? name) (null? value)) (error "DECVAL ERROR: Failed adding variable to state."))
+      ; if name is null, error
+      ((null? name) (error "DECVAL ERROR: Failed adding variable to state."))
       ; if the var name already exists, error
       ((not (eqv? (getVal name state) #f)) (error "DECVAL NAMESPACE ERROR: Namespace for var already occupied."))
       (else
