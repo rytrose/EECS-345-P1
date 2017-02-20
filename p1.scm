@@ -21,8 +21,39 @@
 ; ------------------------------------------------------------------------------
 (define interpret
   (lambda (pt s)
-    pt ))
+    (cond
+      ((null? (caar pt)) (interpret (cdr pt) s))
+      ((null? pt) s)
+      ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (cddar pt) s)) (cdr (m_eval (cddar pt) s))))         ; if "var"
+      ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                               ; if "="
+      ((eqv? (caar pt) 'return) (car (m_eval (car pt) s)))                                                                            ; if "return"
+      ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) ())))
+      ((eqv? (caar pt) 'while) (interptet (cdr pt) (m_while (cadar pt) ())))
+      (else (error "INTERPRET ERROR: Invalid statement."))))))
 
+; ------------------------------------------------------------------------------
+; m_eval - 
+; ------------------------------------------------------------------------------
+
+; ------------------------------------------------------------------------------
+; m_if - handles a conditional block
+; inputs:
+;  condition - The condition on which to run the block
+;  ifblock - The block to run if condition is true
+;  elseblock - The block to run if condition is false (optional)
+;  state - The state before the condition is evaluated
+; returns:
+;  The final state after evaluating the condition and, if applicable, running the block
+; ------------------------------------------------------------------------------
+(define m_if
+  (lambda (condition ifblock elseblock state)
+    (cond
+      ((null? condition) (error "CONDITION ERROR: Condition cannot be null."))
+      ((null? ifblock) (error "CONDITION ERROR: Block cannot be null."))
+      ((null? state) (error "CONDITION ERROR: State cannot be null."))
+      ((car (m_eval condition state)) (interpret ifblock (cdr (m_eval condition state))))
+      (else (if (null? elseblock) (cdr (m_eval condition state)) (interpret elseblock (cdr (m_eval condition state))))))))
+      
 ; ------------------------------------------------------------------------------
 ; decVal - declares and initializes a variable
 ; inputs:
@@ -36,9 +67,9 @@
   (lambda (name value state)
     (cond
       ; if name or value are null, error
-      ((or (null? name) (null? value)) (error "failed adding variable to state"))
+      ((or (null? name) (null? value)) (error "DECVAL ERROR: Failed adding variable to state."))
       ; if the var name already exists, error
-      ((not (eqv? (getVal name state) #f)) (error "namespace for var already occupied"))
+      ((not (eqv? (getVal name state) #f)) (error "DECVAL NAMESPACE ERROR: Namespace for var already occupied."))
       (else
        ; add name and value to state
        (cons (cons name (car state)) (cons (cons value (cadr state)) '()) )))))
@@ -56,7 +87,7 @@
   (lambda (name value state)
     (cond
       ; if the names or values of states are null, error
-      ((and (null? (car state)) (null? (cadr state))) (error "variable name not found"))
+      ((and (null? (car state)) (null? (cadr state))) (error "SETVAL ERROR: Variable name not found."))
       ; if it finds the var, set var 
       ((eqv? name (caar state)) (cons (car state) (cons (cons value (cdadr state)) '())))    
       ; else recurse on the next state value 
