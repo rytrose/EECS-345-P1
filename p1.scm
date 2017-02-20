@@ -47,7 +47,7 @@
       ((eqv? (car pt) '-)
        (if (null? (cddr pt)) (cons (- (car (m_eval (cadr pt) s))) (cdr (m_eval (cadr pt) s))) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))))
       ((eqv? (car pt) '*) (cons (* (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
-      ((eqv? (car pt) '/) (cons (/ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '/) (cons (floor (/ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '%) (cons (modulo (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '==) (cons (eqv? (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '!=) (cons (not (eqv? (car (m_eval (cadr pt) s))  (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
