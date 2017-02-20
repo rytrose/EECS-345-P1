@@ -8,16 +8,21 @@
 ; ------------------------------------------------------------------------------
 ; test
 ; ------------------------------------------------------------------------------
-(define testPrograms '(("Test1.txt" 150)("Test2.txt" -4)("Test3.txt" 10)("Test4.txt" 16)("Test5.txt" 220)("Test6.txt" 5)("Test7.txt" 6)("Test8.txt" 10)("Test9.txt" 5)("Test10.txt" -39)("Test15.txt" 'true)("Test16.txt" 100)("Test17.txt" 'false)("Test18.txt" 'true)("Test19.txt" 128)("Test20.txt" 12)))
+(define testPrograms '(("Test1.txt" 150)("Test2.txt" -4)("Test3.txt" 10)("Test4.txt" 16)("Test5.txt" 220)("Test6.txt" 5)("Test7.txt" 6)("Test8.txt" 10)("Test9.txt" 5)("Test10.txt" -39)("Test15.txt" true)("Test16.txt" 100)("Test17.txt" false)("Test18.txt" true)("Test19.txt" 128)("Test20.txt" 12)))
 
 (define testInterpreter
   (lambda (testPrograms passed failed)
-    (if (null? testPrograms) (display passed " - " failed))
-    (display (caar testPrograms))
-    (display " - ")
-    (display (if (eqv? (interpreter (caar testPrograms)) (cadar testPrograms)) "PASSED" "FAILED"))
-    (newline)
-    (if (eqv? (interpreter (caar testPrograms)) (cadar testPrograms)) (testInterpreter (cdr testPrograms) (+ passed 1) failed) (testInterpreter (cdr testPrograms) passed (+ failed 1)))))
+    (cond
+      ((null? testPrograms) (display-all "Passed: " passed " - " "Failed: " failed))
+      (else 
+       (display (caar testPrograms))
+       (display " - ")
+       (display (if (eqv? (interpreter (caar testPrograms)) (cadar testPrograms)) "PASSED" "FAILED"))
+       (newline)
+       (if (eqv? (interpreter (caar testPrograms)) (cadar testPrograms)) (testInterpreter (cdr testPrograms) (+ passed 1) failed) (testInterpreter (cdr testPrograms) passed (+ failed 1)))))))
+
+(define (display-all . vs)
+  (for-each display vs))
 
 ; ------------------------------------------------------------------------------
 ; interpreter - the primary call to interpret a file
@@ -65,6 +70,7 @@
       ((eqv? pt 'true) (cons #t s))
       ((eqv? pt 'false) (cons #f s))
       ((atom? pt) (if (or (eqv? (getVal pt s) 'NULL) (null? (getVal pt s))) (error "VAR ERROR: Variable used before declaration or assignment.") (cons (getVal pt s) s)))
+      ((eqv? (car pt) '=) (interpret (list pt) s)) ; LINE ADDED BY RYAN, DOES NOT WORK
       ((eqv? (car pt) '+) (cons (+ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '-)
        (if (null? (cddr pt)) (cons (- (car (m_eval (cadr pt) s))) (cdr (m_eval (cadr pt) s))) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))))
