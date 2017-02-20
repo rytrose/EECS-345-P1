@@ -26,7 +26,7 @@
       ((null? (caar pt)) (interpret (cdr pt) s))
       ((eqv? (caar pt) 'var) (interpret (cdr pt) (decVal (cadar pt) (car (m_eval (if (null? (cddar pt)) (cddar pt) (caddar pt)) s)) (cdr (m_eval (if (null? (cddar pt)) (cddar pt) (caddar pt)) s))))) 
       ((eqv? (caar pt) '=) (interpret (cdr pt) (m_assign (cdar pt) s)))                                                              ; if "="
-      ((eqv? (caar pt) 'return) (car (m_eval (cadar pt) s)))                                                                         ; if "return"
+      ((eqv? (caar pt) 'return) (if (boolean? (car (m_eval (cadar pt) s))) (if (car (m_eval (cadar pt) s)) 'true 'false) (car (m_eval (cadar pt) s))))                                                                        ; if "return"
       ((eqv? (caar pt) 'if) (interpret (cdr pt) (m_if (cadar pt) (caddar pt) (if (null? (cdddar pt)) '() (car (cdddar pt))) s)))       ; if "if"
       ((eqv? (caar pt) 'while) (interpret (cdr pt) (m_while (cadar pt) (caddar pt))))                                                ; if "while"
       (else (error "INTERPRET ERROR: Invalid statement.")))))
@@ -40,9 +40,12 @@
   (lambda (pt s)
     (cond
       ((null? pt) (cons '() s))
-      ((atom? pt) (cons (getVal pt s) s))
+      ((eqv? pt 'true) (cons #t s))
+      ((eqv? pt 'false) (cons #f s))
+      ((atom? pt) (if (or (not (getVal pt s)) (null? (getVal pt s))) (error "VAR ERROR: Variable used before declaration or assignment.") (cons (getVal pt s) s)))
       ((eqv? (car pt) '+) (cons (+ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
-      ((eqv? (car pt) '-) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
+      ((eqv? (car pt) '-)
+       (if (null? (cddr pt)) (cons (- (car (m_eval (cadr pt) s))) (cdr (m_eval (cadr pt) s))) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))))
       ((eqv? (car pt) '*) (cons (* (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '/) (cons (/ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '%) (cons (modulo (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
@@ -119,7 +122,7 @@
   (lambda (name value state)
     (cond
       ; if the names or values of states are null, error
-      ((and (null? (car state)) (null? (cadr state))) (error "SETVAL ERROR: Variable name not found."))
+      ((and (null? (car state)) (null? (cadr state))) (error "SETVAL ERROR: Variable not found."))
       ; if it finds the var, set var 
       ((eqv? name (caar state)) (cons (car state) (cons (cons value (cdadr state)) '())))    
       ; else recurse on the next state value 
