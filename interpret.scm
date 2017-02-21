@@ -17,9 +17,9 @@
       (else 
        (display (caar testPrograms))
        (display " - ")
-       (display (if (eqv? (interpreter (caar testPrograms)) (cadar testPrograms)) "PASSED" "FAILED"))
+       (display (if (eqv? (interpret (caar testPrograms)) (cadar testPrograms)) "PASSED" "FAILED"))
        (newline)
-       (if (eqv? (interpreter (caar testPrograms)) (cadar testPrograms)) (testInterpreter (cdr testPrograms) (+ passed 1) failed) (testInterpreter (cdr testPrograms) passed (+ failed 1)))))))
+       (if (eqv? (interpret (caar testPrograms)) (cadar testPrograms)) (testInterpreter (cdr testPrograms) (+ passed 1) failed) (testInterpreter (cdr testPrograms) passed (+ failed 1)))))))
 
 (define (display-all . vs)
   (for-each display vs))
@@ -33,7 +33,7 @@
 ; ------------------------------------------------------------------------------
 (define interpret
   (lambda (fd)
-    (interpret (parser fd) '(() ())) ))
+    (interpreter (parser fd) '(() ())) ))
 
 ; ------------------------------------------------------------------------------
 ; interpreter
