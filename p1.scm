@@ -70,7 +70,6 @@
       ((eqv? pt 'true) (cons #t s))
       ((eqv? pt 'false) (cons #f s))
       ((atom? pt) (if (or (eqv? (getVal pt s) 'NULL) (null? (getVal pt s))) (error "VAR ERROR: Variable used before declaration or assignment.") (cons (getVal pt s) s)))
-      ((eqv? (car pt) '=) (interpret (list pt) s)) ; LINE ADDED BY RYAN, DOES NOT WORK
       ((eqv? (car pt) '+) (cons (+ (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))))
       ((eqv? (car pt) '-)
        (if (null? (cddr pt)) (cons (- (car (m_eval (cadr pt) s))) (cdr (m_eval (cadr pt) s))) (cons (- (car (m_eval (cadr pt) s)) (car (m_eval (caddr pt) (cdr (m_eval (cadr pt) s))))) (cdr (m_eval (caddr pt) (cdr (m_eval (cadr pt) s)))))))
